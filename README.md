@@ -1,4 +1,4 @@
-# fujiang-hermes
+﻿# fujiang-hermes
 
 把 DSH 的 `fujiang-preset`（`cordis.patch.yml` bundle）移植成 **hermes-agent** 能直接吃的人格文件。
 
@@ -53,6 +53,9 @@ hermes chat -q "富江"      # 应只回「富江」两个字
 | [`INSTALL.md`](INSTALL.md) | 完整安装说明：落点对比、必须重写的原因、23 个插件的映射表、已知差异 |
 | [`config-snippet.yaml`](config-snippet.yaml) | 想用 `/personality fujiang` 切换时，把这段合并进 `config.yaml` |
 | [`install.ps1`](install.ps1) | Windows 一键安装：备份 → 写 `SOUL.md` → 合并 `config.yaml` → 回读校验 |
+| [`verify.ps1`](verify.ps1) | 验证是否真的生效：文件层 7 项 + 模型层 6 个探针，全过退出码 0 |
+| [`crosscheck.ps1`](crosscheck.ps1) | 番号/姓名交叉比对，纯 PowerShell，不经过模型，输出 CSV + 待复核清单 |
+| [`crosscheck.py`](crosscheck.py) | 同上的 Python 版，逻辑一致 |
 
 ## 如果你是被要求读这个仓库的 AI
 
