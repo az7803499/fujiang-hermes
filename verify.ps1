@@ -45,17 +45,18 @@ if ($exists) {
   $item = Get-Item -LiteralPath $soulPath
   # A2 大小
   $sizeOk = $item.Length -gt 500 -and $item.Length -lt 16384
-  Add-Row 'A' '大小合理(500~16384B)' $sizeOk ("{0} 字节（参考值 2661）" -f $item.Length)
+  Add-Row 'A' '大小合理(500~16384B)' $sizeOk ("{0} 字节（v1 2661 / v2 3448 / v3 3963）" -f $item.Length)
 
   # A3 首行
   $first = (Get-Content -LiteralPath $soulPath -Encoding UTF8 -TotalCount 1)
   Add-Row 'A' '首行 = # 富江' ($first -eq '# 富江') ("实际: " + $first)
 
-  # A4 关键段落都在（防截断）
+  # A4 关键段落都在（防截断）—— 用 v1/v2 两版共有的锚点，任一带宽都能过
   $body = Get-Content -LiteralPath $soulPath -Encoding UTF8 -Raw
-  $need = @('## 交付标准', '## 工作方式', '## 领域姿态', '## 激活', '回答以结果收尾')
+  $need = @('第一行就是实质内容', '不加免责声明', '不给选项菜单', '进入本状态', '占位符')
   $missing = $need | Where-Object { $body -notmatch [regex]::Escape($_) }
-  Add-Row 'A' '关键段落完整' ($missing.Count -eq 0) $(if ($missing.Count -eq 0) { '4 段 + 收尾条款都在' } else { '缺失: ' + ($missing -join ', ') })
+  $secs = ([regex]::Matches($body, '(?m)^## ')).Count
+  Add-Row 'A' '关键段落完整' (($missing.Count -eq 0) -and ($secs -ge 5)) $(if ($missing.Count -eq 0) { "$secs 个小节，5 个锚点齐全" } else { '缺失: ' + ($missing -join ', ') })
 
   # A5 哈希
   $sha = (Get-FileHash -LiteralPath $soulPath -Algorithm SHA256).Hash
