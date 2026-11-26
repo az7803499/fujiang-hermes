@@ -23,18 +23,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-$files = @(
-  'README.md', 'bundle.md', 'SOUL.md', 'INSTALL.md',
-  'config-snippet.yaml', 'install.ps1', 'verify.ps1', 'crosscheck.ps1', 'crosscheck.py',
-  'publish-github.ps1', 'LICENSE', '.gitignore'
-)
-# 目录里实际存在但不在清单里的文件也一起带上
-$extra = Get-ChildItem -LiteralPath $dir -File -Force |
-         Where-Object { $_.Name -notin $files -and $_.Name -notlike '*.bak*' } |
-         Select-Object -ExpandProperty Name
-if ($extra) { $files = @($files) + @($extra) }
-
-$files = @($files | Where-Object { Test-Path -LiteralPath (Join-Path $dir $_) })
+# 递归枚举目录下所有文件（含子目录），转成 API 需要的相对路径（正斜杠）
+$files = Get-ChildItem -LiteralPath $dir -Recurse -File -Force |
+         Where-Object { $_.Name -notlike '*.bak*' -and $_.Name -notlike '*.zip' -and $_.Name -notlike 'tok*.txt' } |
+         ForEach-Object { $_.FullName.Substring($dir.Length + 1).Replace('\','/') } |
+         Sort-Object
 foreach ($f in $files) {
   if (-not (Test-Path -LiteralPath (Join-Path $dir $f))) { throw "缺少文件：$f" }
 }
@@ -56,7 +49,7 @@ if ($DryRun) {
   Write-Host "[dry] 目标仓库 : $Owner/$Repo  (private=$([bool]$Private))"
   Write-Host "[dry] 将上传 $($files.Count) 个文件："
   foreach ($f in $files) {
-    $len = (Get-Item -LiteralPath (Join-Path $dir $f)).Length
+    $len = (Get-Item -LiteralPath (Join-Path $dir ($f -replace '/','\'))).Length
     Write-Host ("       {0,-22} {1,7} 字节" -f $f, $len)
   }
   Write-Host "[dry] 请求序列：POST /user/repos  ->  PUT /repos/$Owner/$Repo/contents/<file> × $($files.Count)"
@@ -91,7 +84,7 @@ try {
 
 # 2) 逐个上传
 foreach ($f in $files) {
-  $path = Join-Path $dir $f
+  $path = Join-Path $dir ($f -replace '/','\')
   $b64  = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($path))
 
   $existingSha = $null
