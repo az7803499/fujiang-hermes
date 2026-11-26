@@ -25,8 +25,16 @@ $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $files = @(
   'README.md', 'bundle.md', 'SOUL.md', 'INSTALL.md',
-  'config-snippet.yaml', 'install.ps1', 'LICENSE', '.gitignore'
+  'config-snippet.yaml', 'install.ps1', 'verify.ps1', 'crosscheck.ps1', 'crosscheck.py',
+  'publish-github.ps1', 'LICENSE', '.gitignore'
 )
+# 目录里实际存在但不在清单里的文件也一起带上
+$extra = Get-ChildItem -LiteralPath $dir -File -Force |
+         Where-Object { $_.Name -notin $files -and $_.Name -notlike '*.bak*' } |
+         Select-Object -ExpandProperty Name
+if ($extra) { $files = @($files) + @($extra) }
+
+$files = @($files | Where-Object { Test-Path -LiteralPath (Join-Path $dir $_) })
 foreach ($f in $files) {
   if (-not (Test-Path -LiteralPath (Join-Path $dir $f))) { throw "缺少文件：$f" }
 }
@@ -79,14 +87,6 @@ try {
     $repoUrl = "https://github.com/$Owner/$Repo"
     Write-Host "[i] 仓库已存在，复用 $repoUrl"
   } else { throw }
-
-  # 空仓库需要先有一个 commit 才能走 contents API 的默认分支
-  try {
-    Invoke-GH PUT "https://api.github.com/repos/$Owner/$Repo/contents/README.md" @{
-      message = 'init'
-      content = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('# init'))
-    } | Out-Null
-  } catch { }
 }
 
 # 2) 逐个上传
