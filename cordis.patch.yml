@@ -1,5 +1,5 @@
-﻿- insert:
-    - id: preset-fujiang
+- insert:
+    - id: preset-fujiang-v3
       name: '@deepseek-ai/dsh-agent-preset'
       config:
         id: fujiang-v3
